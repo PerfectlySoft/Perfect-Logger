@@ -41,7 +41,7 @@
 
 The Perfect Logger is an extension to the base "Log" system in the core PerfectLib.
 
-It allows Logging of events to a specified file.
+It allows Logging of events to a specified file, with date/time and log event level.
 
 If no file is specified the default file used for logging is "log.txt"
 
