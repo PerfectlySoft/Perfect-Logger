@@ -2,7 +2,7 @@
 // Date: 2016-11-16 03:26:43 +0000
 import PackageDescription
 let package = Package(
-    name: "Perfect-Logger",
+    name: "PerfectLogger",
     targets: [],
     dependencies: [
         Package.Dependency.Package(url: "https://github.com/PerfectlySoft/PerfectLib.git", majorVersion: 2),

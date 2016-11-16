@@ -1,14 +1,14 @@
 import XCTest
-@testable import Perfect_Logger
+@testable import PerfectLogger
 
-class Perfect_LoggerTests: XCTestCase {
+class PerfectLoggerTests: XCTestCase {
     func testBasic() {
 
 		LogFile.critical("test critical default", "/Users/jonathanguthrie/Documents/Perfect-Collection/Perfect-Logger/test.log.txt")
     }
 
 
-    static var allTests : [(String, (Perfect_LoggerTests) -> () throws -> Void)] {
+    static var allTests : [(String, (PerfectLoggerTests) -> () throws -> Void)] {
         return [
             ("testBasic", testBasic),
         ]
