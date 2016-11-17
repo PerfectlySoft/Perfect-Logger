@@ -5,6 +5,7 @@ class PerfectLoggerTests: XCTestCase {
     func testBasic() {
 
 		LogFile.critical("test critical default", "/Users/jonathanguthrie/Documents/Perfect-Collection/Perfect-Logger/test.log.txt")
+		LogFile.critical("test critical default file")
     }
 
 
