@@ -11,10 +11,10 @@
 import PerfectLib
 import SwiftMoment
 
-public var logFileLocation = "./log.txt"
+public var logFileLocation = "./log.log"
 
 struct FileLogger {
-	let defaultFile = "./log.txt"
+	let defaultFile = "./log.log"
 	let consoleEcho = ConsoleLogger()
 
 	fileprivate init(){}
