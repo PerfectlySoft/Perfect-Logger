@@ -1,4 +1,4 @@
-# PerfectLogger
+# Perfect File Logging
 
 <p align="center">
     <a href="http://perfect.org/get-involved.html" target="_blank">
@@ -39,11 +39,7 @@
     </a>
 </p>
 
-The Perfect Logger is an extension to the base "Log" system in the core PerfectLib.
-
-It allows Logging of events to a specified file, with date/time and log event level.
-
-If no file is specified the default file used for logging is "log.txt"
+Using the `PerfectLogger` module, events can be logged to a specfied file, in addition to the console.
 
 ## Using in your project
 
@@ -62,22 +58,41 @@ import PerfectLogger
 To log events to the local console as well as a file:
 
 ``` swift
-LogFile.debug("debug message", "test.txt")
-LogFile.info("info message", "test.txt")
-LogFile.warning("warning message", "test.txt")
-LogFile.error("error message", "test.txt")
-LogFile.critical("critical message", "test.txt")
-LogFile.terminal("terminal message", "test.txt")
+LogFile.debug("debug message", logFile: "test.txt")
+LogFile.info("info message", logFile: "test.txt")
+LogFile.warning("warning message", logFile: "test.txt")
+LogFile.error("error message", logFile: "test.txt")
+LogFile.critical("critical message", logFile: "test.txt")
+LogFile.terminal("terminal message", logFile: "test.txt")
 ```
 
 To log to the default file, omit the file name parameter.
 
-## Setting a custom Logfile location
+## Linking events with "eventid"
 
-The default logfile location is `./log.log`. To set a custom logfile location, set the `logFileLocation` variable in `main.swift`:
+Each log event returns an event id string. If an eventid string is supplied to the directive then it will use the supplied eventid in the log file instead - this makes it easy to link together related events.
 
 ``` swift
-logFileLocation = "/var/log/myLog.log"
+let eid = LogFile.warning("test 1")
+LogFile.critical("test 2", eventid: eid)
+```
+
+returns:
+
+```
+[WARNING] [62f940aa-f204-43ed-9934-166896eda21c] [2016-11-16 15:18:02 GMT-05:00] test 1
+[CRITICAL] [62f940aa-f204-43ed-9934-166896eda21c] [2016-11-16 15:18:02 GMT-05:00] test 2
+```
+
+The returned eventid is marked `@discardableResult` therefore can be safely ignored if not required for re-use.
+
+
+## Setting a custom Logfile location
+
+The default logfile location is `./log.log`. To set a custom logfile location, set the `LogFile.location` variable:
+
+``` swift
+LogFile.location = "/var/log/myLog.log"
 ```
 
 Messages can now be logged directly to the file as set by using:
@@ -91,10 +106,20 @@ LogFile.critical("critical message")
 LogFile.terminal("terminal message")
 ```
 
+## Sample output
+
+```
+[DEBUG] [ec6a9ca5-00b1-4656-9e4c-ddecae8dde02] [2016-11-16 15:18:02 GMT-05:00] a debug message
+[INFO] [ec6a9ca5-00b1-4656-9e4c-ddecae8dde02] [2016-11-16 15:18:02 GMT-05:00] an informational message
+[WARNING] [ec6a9ca5-00b1-4656-9e4c-ddecae8dde02] [2016-11-16 15:18:02 GMT-05:00] a warning message
+[ERROR] [62f940aa-f204-43ed-9934-166896eda21c] [2016-11-16 15:18:02 GMT-05:00] an error message
+[CRITICAL] [62f940aa-f204-43ed-9934-166896eda21c] [2016-11-16 15:18:02 GMT-05:00] a critical message
+[EMERG] [ec6a9ca5-00b1-4656-9e4c-ddecae8dde02] [2016-11-16 15:18:02 GMT-05:00] an emergency message
+```
 
 ## Issues
 
-We are transitioning to using JIRA for all bugs and support related issues, therefore the GitHub issues has been disabled.
+We use JIRA for all bugs and support related issues, therefore the GitHub issues has been disabled.
 
 If you find a mistake, bug, or any other helpful suggestion you'd like to make on the docs please head over to [http://jira.perfect.org:8080/servicedesk/customer/portal/1](http://jira.perfect.org:8080/servicedesk/customer/portal/1) and raise it.
 
