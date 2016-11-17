@@ -72,6 +72,25 @@ LogFile.terminal("terminal message", "test.txt")
 
 To log to the default file, omit the file name parameter.
 
+## Setting a custom Logfile location
+
+The default logfile location is `./log.log`. To set a custom logfile location, set the `logFileLocation` variable in `main.swift`:
+
+``` swift
+logFileLocation = "/var/log/myLog.log"
+```
+
+Messages can now be logged directly to the file as set by using:
+
+``` swift
+LogFile.debug("debug message")
+LogFile.info("info message")
+LogFile.warning("warning message")
+LogFile.error("error message")
+LogFile.critical("critical message")
+LogFile.terminal("terminal message")
+```
+
 
 ## Issues
 
