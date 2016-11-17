@@ -4,8 +4,12 @@ import XCTest
 class PerfectLoggerTests: XCTestCase {
     func testBasic() {
 
-		LogFile.critical("test critical default", "/Users/jonathanguthrie/Documents/Perfect-Collection/Perfect-Logger/test.log.txt")
-		LogFile.critical("test critical default file")
+		LogFile.location = "/Users/jonathanguthrie/Documents/Perfect-Collection/Perfect-Logger/test.set.txt"
+
+		LogFile.critical("test critical default", logFile:"/Users/jonathanguthrie/Documents/Perfect-Collection/Perfect-Logger/test.log.txt")
+		let eid = LogFile.critical("test critical default file")
+		LogFile.critical("test critical default file 1")
+		LogFile.critical("test critical default file 2", eventid: eid)
     }
 
 
