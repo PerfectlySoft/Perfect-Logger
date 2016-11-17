@@ -11,7 +11,7 @@
 import PerfectLib
 import SwiftMoment
 
-var logFileLocation = "./log.txt"
+public var logFileLocation = "./log.txt"
 
 struct FileLogger {
 	let defaultFile = "./log.txt"
