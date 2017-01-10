@@ -1,4 +1,4 @@
-# Perfect File Logging
+# Perfect Logging (File & Remote)
 
 <p align="center">
     <a href="http://perfect.org/get-involved.html" target="_blank">
@@ -41,12 +41,14 @@
 
 Using the `PerfectLogger` module, events can be logged to a specfied file, in addition to the console.
 
+Support is also included in this module for remote logging events to the [Perfect Log Server](https://github.com/PerfectServers/Perfect-LogServer).
+
 ## Using in your project
 
 Add the dependancy to your project's Package.swift file:
 
 ``` swift
-.Package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", majorVersion: 0, minor: 0),
+.Package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", majorVersion: 1),
 ```
 
 Now add the `import` directive to the file you wish to use the logging in:
@@ -116,6 +118,59 @@ LogFile.terminal("terminal message")
 [CRITICAL] [62f940aa-f204-43ed-9934-166896eda21c] [2016-11-16 15:18:02 GMT-05:00] a critical message
 [EMERG] [ec6a9ca5-00b1-4656-9e4c-ddecae8dde02] [2016-11-16 15:18:02 GMT-05:00] an emergency message
 ```
+
+## Remote Logging
+
+The "Perfect-Logging" dependency includes support for remote logging to this log server.
+
+To include the dependency in your project, add the following to your project's Package.swift file:
+
+``` swift
+.Package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", majorVersion: 1),
+```
+
+Now add the import directive to the file you wish to use the logging in:
+
+``` swift 
+import PerfectLogger
+```
+
+#### Configuration
+Three configuration parameters are required:
+
+``` swift
+// Your token
+RemoteLogger.token = "<your token>"
+
+// App ID (Optional)
+RemoteLogger.appid = "<your appid>"
+
+// URL to access the log server. 
+// Note, this is not the full API path, just the host and port.
+RemoteLogger.logServer = "http://localhost:8181"
+
+```
+
+
+#### To log events to the log server:
+
+``` swift
+var obj = [String: Any]()
+obj["one"] = "donkey"
+RemoteLogger.critical(obj)
+```
+
+#### Linking events with "eventid"
+
+Each log event returns an event id string. If an eventid string is supplied to the directive then it will use the supplied eventid in the log directive instead - this makes it easy to link together related events.
+
+``` swift
+let eid = RemoteLogger.critical(obj)
+RemoteLogger.info(obj, eventid: eid)
+```
+
+The returned eventid is marked @discardableResult therefore can be safely ignored if not required for re-use.
+
 
 ## Issues
 
