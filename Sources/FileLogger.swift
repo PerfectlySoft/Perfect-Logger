@@ -48,34 +48,34 @@ struct FileLogger {
 		}
 	}
 
-	func debug(message: String, _ eventid: String, _ logFile: String) {
+	func debug(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.debug(message: message)
-		filelog(priority: "[DEBUG]", message, eventid, logFile)
+		filelog(priority: even ? "[DEBUG]" : "[DEBUG]", message, eventid, logFile)
 	}
 
-	func info(message: String, _ eventid: String, _ logFile: String) {
+	func info(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.info(message: message)
-		filelog(priority: "[INFO]", message, eventid, logFile)
+		filelog(priority: even ? "[INFO] " : "[INFO]", message, eventid, logFile)
 	}
 
-	func warning(message: String, _ eventid: String, _ logFile: String) {
+	func warning(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.warning(message: message)
-		filelog(priority: "[WARNING]", message, eventid, logFile)
+		filelog(priority: even ? "[WARN] " : "[WARNING]", message, eventid, logFile)
 	}
 
-	func error(message: String, _ eventid: String, _ logFile: String) {
+	func error(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.error(message: message)
-		filelog(priority: "[ERROR]", message, eventid, logFile)
+		filelog(priority: even ? "[ERROR]" : "[ERROR]", message, eventid, logFile)
 	}
 
-	func critical(message: String, _ eventid: String, _ logFile: String) {
+	func critical(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.critical(message: message)
-		filelog(priority: "[CRITICAL]", message, eventid, logFile)
+		filelog(priority: even ? "[CRIT] " : "[CRITICAL]", message, eventid, logFile)
 	}
 
-	func terminal(message: String, _ eventid: String, _ logFile: String) {
+	func terminal(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.terminal(message: message)
-		filelog(priority: "[EMERG]", message, eventid, logFile)
+		filelog(priority: even ? "[EMERG]" : "[EMERG]", message, eventid, logFile)
 	}
 }
 
@@ -88,6 +88,10 @@ public struct LogFile {
 	/// The location of the log file.
 	/// The default location is relative, "log.log"
 	public static var location = "./log.log"
+	
+	/// Whether or not to even off the log messages
+	/// If set to true log messages will be inline with each other
+	public static var even = false
 
 	/// Logs a [DEBUG] message to the log file.
 	/// Also echoes the message to the console.
@@ -95,8 +99,8 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func debug(_ message: @autoclosure () -> String, eventid: String = UUID().string, logFile: String = location) -> String {
-		LogFile.logger.debug(message: message(), eventid, logFile)
+	public static func debug(_ message: @autoclosure () -> String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+		LogFile.logger.debug(message: message(), eventid, logFile, evenIdents)
 		return eventid
 	}
 
@@ -106,8 +110,8 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func info(_ message: String, eventid: String = UUID().string, logFile: String = location) -> String {
-		LogFile.logger.info(message: message, eventid, logFile)
+	public static func info(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+		LogFile.logger.info(message: message, eventid, logFile, evenIdents)
 		return eventid
 	}
 
@@ -117,8 +121,8 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func warning(_ message: String, eventid: String = UUID().string, logFile: String = location) -> String {
-		LogFile.logger.warning(message: message, eventid, logFile)
+	public static func warning(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+		LogFile.logger.warning(message: message, eventid, logFile, evenIdents)
 		return eventid
 	}
 
@@ -128,8 +132,8 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func error(_ message: String, eventid: String = UUID().string, logFile: String = location) -> String {
-		LogFile.logger.error(message: message, eventid, logFile)
+	public static func error(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+		LogFile.logger.error(message: message, eventid, logFile, evenIdents)
 		return eventid
 	}
 
@@ -139,8 +143,8 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func critical(_ message: String, eventid: String = UUID().string, logFile: String = location) -> String {
-		LogFile.logger.critical(message: message, eventid, logFile)
+	public static func critical(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+		LogFile.logger.critical(message: message, eventid, logFile, evenIdents)
 		return eventid
 	}
 
@@ -148,8 +152,8 @@ public struct LogFile {
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
 	/// Takes an optional "eventid" param, which helps to link related events together.
-	public static func terminal(_ message: String, eventid: String = UUID().string, logFile: String = location) -> Never  {
-		LogFile.logger.terminal(message: message, eventid, logFile)
+	public static func terminal(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> Never  {
+		LogFile.logger.terminal(message: message, eventid, logFile, evenIdents)
 		fatalError(message)
 	}
 }
