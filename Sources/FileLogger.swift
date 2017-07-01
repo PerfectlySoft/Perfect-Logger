@@ -34,7 +34,7 @@ struct FileLogger {
 
 	fileprivate init(){}
 
-	func filelog(priority: String, _ args: String, _ eventid: String, _ logFile: String) {
+	func filelog(priority: String, _ args: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		let m = moment()
 		var useFile = logFile
 		if logFile.isEmpty { useFile = defaultFile }
@@ -44,38 +44,38 @@ struct FileLogger {
 			try ff.open(.append)
 			try ff.write(string: "\(priority) [\(eventid)] [\(m.format())] \(args)\n")
 		} catch {
-			consoleEcho.critical(message: "\(error)")
+			consoleEcho.critical(message: "\(error)", even)
 		}
 	}
 
 	func debug(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
-		consoleEcho.debug(message: message)
-		filelog(priority: even ? "[DEBUG]" : "[DEBUG]", message, eventid, logFile)
+		consoleEcho.debug(message: message, even)
+		filelog(priority: even ? "[DEBUG]" : "[DEBUG]", message, eventid, logFile, even)
 	}
 
 	func info(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
-		consoleEcho.info(message: message)
-		filelog(priority: even ? "[INFO] " : "[INFO]", message, eventid, logFile)
+		consoleEcho.info(message: message, even)
+		filelog(priority: even ? "[INFO] " : "[INFO]", message, eventid, logFile, even)
 	}
 
 	func warning(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
-		consoleEcho.warning(message: message)
-		filelog(priority: even ? "[WARN] " : "[WARNING]", message, eventid, logFile)
+		consoleEcho.warning(message: message, even)
+		filelog(priority: even ? "[WARN] " : "[WARNING]", message, eventid, logFile, even)
 	}
 
 	func error(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
-		consoleEcho.error(message: message)
-		filelog(priority: even ? "[ERROR]" : "[ERROR]", message, eventid, logFile)
+		consoleEcho.error(message: message, even)
+		filelog(priority: even ? "[ERROR]" : "[ERROR]", message, eventid, logFile, even)
 	}
 
 	func critical(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
-		consoleEcho.critical(message: message)
-		filelog(priority: even ? "[CRIT] " : "[CRITICAL]", message, eventid, logFile)
+		consoleEcho.critical(message: message, even)
+		filelog(priority: even ? "[CRIT] " : "[CRITICAL]", message, eventid, logFile, even)
 	}
 
 	func terminal(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
-		consoleEcho.terminal(message: message)
-		filelog(priority: even ? "[EMERG]" : "[EMERG]", message, eventid, logFile)
+		consoleEcho.terminal(message: message, even)
+		filelog(priority: even ? "[EMERG]" : "[EMERG]", message, eventid, logFile, even)
 	}
 }
 
