@@ -28,7 +28,11 @@ public struct RemoteLogger {
 	public static var logServer = "http://localhost:8100"
 	public static var token = ""
 	public static var appid = ""
-
+	
+	/// Whether or not to even off the log messages
+	/// If set to true log messages will be inline with each other
+	public static var even = false
+	
 	static let consoleEcho = ConsoleLogger()
 
 	fileprivate init(){}
@@ -103,12 +107,12 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func debug(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string) -> String {
+	public static func debug(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
 		do {
-			consoleEcho.debug(message: try detail.jsonEncodedString())
+			consoleEcho.debug(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "debug", detail, eventid)
 		} catch {
-			consoleEcho.error(message: "\(error)")
+			consoleEcho.error(message: "\(error)", evenIdents)
 		}
 		return eventid
 	}
@@ -119,12 +123,12 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func info(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string) -> String {
+	public static func info(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
 		do {
-			consoleEcho.info(message: try detail.jsonEncodedString())
+			consoleEcho.info(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "info", detail, eventid)
 		} catch {
-			consoleEcho.error(message: "\(error)")
+			consoleEcho.error(message: "\(error)", evenIdents)
 		}
 		return eventid
 	}
@@ -135,12 +139,12 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func warning(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string) -> String {
+	public static func warning(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
 		do {
-			consoleEcho.warning(message: try detail.jsonEncodedString())
+			consoleEcho.warning(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "warning", detail, eventid)
 		} catch {
-			consoleEcho.error(message: "\(error)")
+			consoleEcho.error(message: "\(error)", evenIdents)
 		}
 		return eventid
 	}
@@ -151,12 +155,12 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func error(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string) -> String {
+	public static func error(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
 		do {
-			consoleEcho.error(message: try detail.jsonEncodedString())
+			consoleEcho.error(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "error", detail, eventid)
 		} catch {
-			consoleEcho.error(message: "\(error)")
+			consoleEcho.error(message: "\(error)", evenIdents)
 		}
 		return eventid
 	}
@@ -167,12 +171,12 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func critical(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string) -> String {
+	public static func critical(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
 		do {
-			consoleEcho.critical(message: try detail.jsonEncodedString())
+			consoleEcho.critical(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "critical", detail, eventid)
 		} catch {
-			consoleEcho.error(message: "\(error)")
+			consoleEcho.error(message: "\(error)", evenIdents)
 		}
 		return eventid
 	}
@@ -181,9 +185,9 @@ public struct RemoteLogger {
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
 	/// Takes an optional "eventid" param, which helps to link related events together.
-	public static func terminal(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string) -> Never {
+	public static func terminal(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> Never {
 		do {
-			consoleEcho.critical(message: try detail.jsonEncodedString())
+			consoleEcho.critical(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "emerg", detail, eventid)
 			let str = try detail.jsonEncodedString()
 			fatalError(str)
@@ -192,4 +196,3 @@ public struct RemoteLogger {
 		}
 	}
 }
-
