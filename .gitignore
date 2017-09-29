@@ -68,3 +68,5 @@ Packages/
 *.xcodeproj
 buildlinux
 Package.swift.orig
+Package.resolved
+test.set.txt
