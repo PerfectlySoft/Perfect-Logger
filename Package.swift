@@ -5,7 +5,7 @@ let package = Package(
 	name: "PerfectLogger",
 	targets: [],
 	dependencies: [
-		.Package(url: "https://github.com/iamjono/SwiftMoment.git", majorVersion: 0),
+		.Package(url: "https://github.com/iamjono/SwiftMoment.git", majorVersion: 1),
 		.Package(url: "https://github.com/PerfectlySoft/Perfect-CURL.git", majorVersion: 3),
 	]
 )
