@@ -48,7 +48,7 @@ Support is also included in this module for remote logging events to the [Perfec
 Add the dependancy to your project's Package.swift file:
 
 ``` swift
-.Package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", majorVersion: 1),
+.Package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", majorVersion: 3),
 ```
 
 Now add the `import` directive to the file you wish to use the logging in:
