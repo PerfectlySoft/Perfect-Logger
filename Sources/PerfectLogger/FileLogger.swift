@@ -26,23 +26,25 @@
 #endif
 
 import PerfectLib
-import SwiftMoment
+import Foundation
 
 struct FileLogger {
 	let defaultFile = "./log.log"
 	let consoleEcho = ConsoleLogger()
-
-	fileprivate init(){}
+	let fmt = DateFormatter()
+	fileprivate init(){
+		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZZ"
+	}
 
 	func filelog(priority: String, _ args: String, _ eventid: String, _ logFile: String, _ even: Bool) {
-		let m = moment()
+		let m = fmt.string(from: Date())
 		var useFile = logFile
 		if logFile.isEmpty { useFile = defaultFile }
 		let ff = File(useFile)
 		defer { ff.close() }
 		do {
 			try ff.open(.append)
-			try ff.write(string: "\(priority) [\(eventid)] [\(m.format())] \(args)\n")
+			try ff.write(string: "\(priority) [\(eventid)] [\(m)] \(args)\n")
 		} catch {
 			consoleEcho.critical(message: "\(error)", even)
 		}
