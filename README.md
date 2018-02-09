@@ -171,16 +171,5 @@ RemoteLogger.info(obj, eventid: eid)
 
 The returned eventid is marked @discardableResult therefore can be safely ignored if not required for re-use.
 
-
-## Issues
-
-We use JIRA for all bugs and support related issues, therefore the GitHub issues has been disabled.
-
-If you find a mistake, bug, or any other helpful suggestion you'd like to make on the docs please head over to [http://jira.perfect.org:8080/servicedesk/customer/portal/1](http://jira.perfect.org:8080/servicedesk/customer/portal/1) and raise it.
-
-A comprehensive list of open issues can be found at [http://jira.perfect.org:8080/projects/ISS/issues](http://jira.perfect.org:8080/projects/ISS/issues)
-
-
-
 ## Further Information
 For more information on the Perfect project, please visit [perfect.org](http://perfect.org).
