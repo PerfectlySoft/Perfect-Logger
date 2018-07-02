@@ -21,6 +21,7 @@
 import PerfectLib
 import PerfectCURL
 import cURL
+import Foundation
 
 
 public struct RemoteLogger {
@@ -106,7 +107,7 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func debug(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
+	public static func debug(_ detail: [String:Any] = [String:Any](), eventid: String = Foundation.UUID().uuidString, evenIdents: Bool = even) -> String {
 		do {
 			consoleEcho.debug(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "debug", detail, eventid)
@@ -122,7 +123,7 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func info(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
+	public static func info(_ detail: [String:Any] = [String:Any](), eventid: String = Foundation.UUID().uuidString, evenIdents: Bool = even) -> String {
 		do {
 			consoleEcho.info(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "info", detail, eventid)
@@ -138,7 +139,7 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func warning(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
+	public static func warning(_ detail: [String:Any] = [String:Any](), eventid: String = Foundation.UUID().uuidString, evenIdents: Bool = even) -> String {
 		do {
 			consoleEcho.warning(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "warning", detail, eventid)
@@ -154,7 +155,7 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func error(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
+	public static func error(_ detail: [String:Any] = [String:Any](), eventid: String = Foundation.UUID().uuidString, evenIdents: Bool = even) -> String {
 		do {
 			consoleEcho.error(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "error", detail, eventid)
@@ -170,7 +171,7 @@ public struct RemoteLogger {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func critical(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> String {
+	public static func critical(_ detail: [String:Any] = [String:Any](), eventid: String = Foundation.UUID().uuidString, evenIdents: Bool = even) -> String {
 		do {
 			consoleEcho.critical(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "critical", detail, eventid)
@@ -184,7 +185,7 @@ public struct RemoteLogger {
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
 	/// Takes an optional "eventid" param, which helps to link related events together.
-	public static func terminal(_ detail: [String:Any] = [String:Any](), eventid: String = UUID().string, evenIdents: Bool = even) -> Never {
+	public static func terminal(_ detail: [String:Any] = [String:Any](), eventid: String = Foundation.UUID().uuidString, evenIdents: Bool = even) -> Never {
 		do {
 			consoleEcho.critical(message: try detail.jsonEncodedString(), evenIdents)
 			try RemoteLogger.log(priority: "emerg", detail, eventid)
