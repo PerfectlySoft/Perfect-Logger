@@ -101,7 +101,7 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func debug(_ message: @autoclosure () -> String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+	public static func debug(_ message: @autoclosure () -> String, eventid: String = Foundation.UUID().uuidString, logFile: String = location, evenIdents: Bool = even) -> String {
 		LogFile.logger.debug(message: message(), eventid, logFile, evenIdents)
 		return eventid
 	}
@@ -112,7 +112,7 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func info(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+	public static func info(_ message: String, eventid: String = Foundation.UUID().uuidString, logFile: String = location, evenIdents: Bool = even) -> String {
 		LogFile.logger.info(message: message, eventid, logFile, evenIdents)
 		return eventid
 	}
@@ -123,7 +123,7 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func warning(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+	public static func warning(_ message: String, eventid: String = Foundation.UUID().uuidString, logFile: String = location, evenIdents: Bool = even) -> String {
 		LogFile.logger.warning(message: message, eventid, logFile, evenIdents)
 		return eventid
 	}
@@ -134,7 +134,7 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func error(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+	public static func error(_ message: String, eventid: String = Foundation.UUID().uuidString, logFile: String = location, evenIdents: Bool = even) -> String {
 		LogFile.logger.error(message: message, eventid, logFile, evenIdents)
 		return eventid
 	}
@@ -145,7 +145,7 @@ public struct LogFile {
 	/// Takes an optional "eventid" param, which helps to link related events together.
 	/// Returns an eventid string. If one was supplied, it will be echoed back, else a new one will be generated for reuse.
 	@discardableResult
-	public static func critical(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> String {
+	public static func critical(_ message: String, eventid: String = Foundation.UUID().uuidString, logFile: String = location, evenIdents: Bool = even) -> String {
 		LogFile.logger.critical(message: message, eventid, logFile, evenIdents)
 		return eventid
 	}
@@ -154,7 +154,7 @@ public struct LogFile {
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
 	/// Takes an optional "eventid" param, which helps to link related events together.
-	public static func terminal(_ message: String, eventid: String = UUID().string, logFile: String = location, evenIdents: Bool = even) -> Never  {
+	public static func terminal(_ message: String, eventid: String = Foundation.UUID().uuidString, logFile: String = location, evenIdents: Bool = even) -> Never  {
 		LogFile.logger.terminal(message: message, eventid, logFile, evenIdents)
 		fatalError(message)
 	}
