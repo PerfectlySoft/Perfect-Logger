@@ -72,3 +72,4 @@ buildlinux
 Package.swift.orig
 Package.resolved
 test.set.txt
+.DS_Store
