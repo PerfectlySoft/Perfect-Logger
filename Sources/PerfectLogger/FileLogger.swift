@@ -29,6 +29,8 @@ import PerfectLib
 import Foundation
 
 struct FileLogger {
+    var threshold: LogPriority = .debug
+
 	let defaultFile = "./log.log"
 	let consoleEcho = ConsoleLogger()
 	let fmt = DateFormatter()
@@ -36,7 +38,10 @@ struct FileLogger {
 		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZZ"
 	}
 
-	func filelog(priority: String, _ args: String, _ eventid: String, _ logFile: String, _ even: Bool) {
+	func filelog(priority: LogPriority, _ args: String, _ eventid: String, _ logFile: String, _ even: Bool) {
+        // Validate level threshold first
+        guard priority >= threshold else { return }
+
 		let m = fmt.string(from: Date())
 		var useFile = logFile
 		if logFile.isEmpty { useFile = defaultFile }
@@ -44,7 +49,7 @@ struct FileLogger {
 		defer { ff.close() }
 		do {
 			try ff.open(.append)
-			try ff.write(string: "\(priority) [\(eventid)] [\(m)] \(args)\n")
+			try ff.write(string: "\(priority.stringRepresentation(even: even)) [\(eventid)] [\(m)] \(args)\n")
 		} catch {
 			consoleEcho.critical(message: "\(error)", even)
 		}
@@ -52,32 +57,32 @@ struct FileLogger {
 
 	func debug(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.debug(message: message, even)
-		filelog(priority: even ? "[DEBUG]" : "[DEBUG]", message, eventid, logFile, even)
+        filelog(priority: .debug, message, eventid, logFile, even)
 	}
 
 	func info(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.info(message: message, even)
-		filelog(priority: even ? "[INFO] " : "[INFO]", message, eventid, logFile, even)
+        filelog(priority: .info, message, eventid, logFile, even)
 	}
 
 	func warning(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.warning(message: message, even)
-		filelog(priority: even ? "[WARN] " : "[WARNING]", message, eventid, logFile, even)
+        filelog(priority: .warning, message, eventid, logFile, even)
 	}
 
 	func error(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.error(message: message, even)
-		filelog(priority: even ? "[ERROR]" : "[ERROR]", message, eventid, logFile, even)
+        filelog(priority: .error, message, eventid, logFile, even)
 	}
 
 	func critical(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.critical(message: message, even)
-		filelog(priority: even ? "[CRIT] " : "[CRITICAL]", message, eventid, logFile, even)
+        filelog(priority: .critical, message, eventid, logFile, even)
 	}
 
 	func terminal(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.terminal(message: message, even)
-		filelog(priority: even ? "[EMERG]" : "[EMERG]", message, eventid, logFile, even)
+        filelog(priority: .terminal, message, eventid, logFile, even)
 	}
 }
 
@@ -86,6 +91,20 @@ public struct LogFile {
 	private init(){}
 
 	static var logger = FileLogger()
+
+    /**
+     Threshold for priorties to log
+
+     e.g. when set to `.error` only error, critical and terminal messages will actually be logged
+     */
+    public static var threshold: LogPriority {
+        get {
+            return logger.threshold
+        }
+        set {
+            logger.threshold = newValue
+        }
+    }
 
 	/// The location of the log file.
 	/// The default location is relative, "log.log"
