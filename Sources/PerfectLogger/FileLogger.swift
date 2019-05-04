@@ -136,7 +136,7 @@ public struct LogFile {
      LogFile.options = [.level, .timestamp]
      ```
      */
-    public static var option: LogOptions {
+    public static var options: LogOptions {
         get {
             return logger.options
         }
