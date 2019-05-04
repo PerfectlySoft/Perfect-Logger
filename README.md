@@ -89,7 +89,9 @@ returns:
 The returned eventid is marked `@discardableResult` therefore can be safely ignored if not required for re-use.
 
 
-## Setting a custom Logfile location
+## Customization
+
+### Setting a custom Logfile location
 
 The default logfile location is `./log.log`. To set a custom logfile location, set the `LogFile.location` variable:
 
@@ -107,6 +109,54 @@ LogFile.error("error message")
 LogFile.critical("critical message")
 LogFile.terminal("terminal message")
 ```
+
+### LogFile threshold
+
+For debug purposes, you want to see as much info as available. However, on production servers you probably desire a
+smaller logfile and filter out all redundant info.
+
+To do so, you may set the LogFile's `threshold` property to the minumum priority you want to actually being logged into the file.
+
+e.g.:
+
+```swift
+LogFile.threshold = .warning
+LogFile.debug("This won't be logged into the file")
+LogFile.info("This won't be logged into the file")
+LogFile.warning("This will be logged into the file")
+LogFile.error("This will be logged into the file")
+LogFile.critical("This will be logged into the file")
+```
+
+The default value of this property is `.debug` to preserve backward compatibility and this property will not affect the Console/Remote logger.
+
+### LogFile options
+
+Depending on your needs, you may not be interested in an event id, timestamp or priority.
+
+Using the LogFile's `options` property you can customize which of those fields will actually be added as a prefix to the log message.
+
+e.g.:
+
+```swift
+// Default behaviour (equal to `[.priority, .eventId, .timestamp]`)
+LogFile.options = .default
+LogFile.debug("This is my log message")
+// Will log: "[DEBUG] [CEC5B5DB-931F-4C5A-A794-17D060BABC80] [2019-05-04 15:16:11 GMT+02:00] This is my log message"
+
+LogFile.options = .none
+LogFile.debug("This is my log message")
+// Will log: "This is my log message"
+
+LogFile.options = [.priority, .timestamp]
+LogFile.debug("This is my log message")
+// Will log: "[DEBUG] [2019-05-04 15:16:11 GMT+02:00] This is my log message"
+
+LogFile.options = [.priority]
+LogFile.debug("This is my log message")
+// Will log: "[DEBUG] This is my log message"
+```
+
 
 ## Sample output
 
