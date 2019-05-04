@@ -30,6 +30,7 @@ import Foundation
 
 struct FileLogger {
     var threshold: LogPriority = .debug
+    var options: LogOptions = .default
 
 	let defaultFile = "./log.log"
 	let consoleEcho = ConsoleLogger()
@@ -38,18 +39,32 @@ struct FileLogger {
 		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZZ"
 	}
 
-	func filelog(priority: LogPriority, _ args: String, _ eventid: String, _ logFile: String, _ even: Bool) {
+    func filelog(priority: LogPriority, _ args: String, _ eventid: String, _ logFile: String, _ even: Bool) {
         // Validate level threshold first
         guard priority >= threshold else { return }
 
-		let m = fmt.string(from: Date())
+        var prefixList = [String]()
+
+        if options.contains(.priority) {
+            prefixList.append(priority.stringRepresentation(even: even))
+        }
+        if options.contains(.eventId) {
+            prefixList.append("[\(eventid)]")
+        }
+        if options.contains(.timestamp) {
+            prefixList.append("[\(fmt.string(from: Date()))]")
+        }
+
+        // Add a space to seperate the prefix list from the message when the list contains at least 1 value
+        let prefix = prefixList.count > 0 ? "\(prefixList.joined(separator: " ")) " : ""
+
 		var useFile = logFile
 		if logFile.isEmpty { useFile = defaultFile }
 		let ff = File(useFile)
 		defer { ff.close() }
 		do {
 			try ff.open(.append)
-			try ff.write(string: "\(priority.stringRepresentation(even: even)) [\(eventid)] [\(m)] \(args)\n")
+			try ff.write(string: "\(prefix)\(args)\n")
 		} catch {
 			consoleEcho.critical(message: "\(error)", even)
 		}
@@ -103,6 +118,30 @@ public struct LogFile {
         }
         set {
             logger.threshold = newValue
+        }
+    }
+
+    /**
+     Log options that indicate which fields (e.g. priority, event ID) should be send to the log file.
+
+     To use the default set:
+
+     ```
+     LogFile.options = .default
+     ```
+
+     To use a custom set:
+
+     ```
+     LogFile.options = [.level, .timestamp]
+     ```
+     */
+    public static var option: LogOptions {
+        get {
+            return logger.options
+        }
+        set {
+            logger.options = newValue
         }
     }
 
