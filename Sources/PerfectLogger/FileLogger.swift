@@ -29,6 +29,9 @@ import PerfectLib
 import Foundation
 
 struct FileLogger {
+    var threshold: LogPriority = .debug
+    var options: LogOptions = .default
+
 	let defaultFile = "./log.log"
 	let consoleEcho = ConsoleLogger()
 	let fmt = DateFormatter()
@@ -36,15 +39,32 @@ struct FileLogger {
 		fmt.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZZ"
 	}
 
-	func filelog(priority: String, _ args: String, _ eventid: String, _ logFile: String, _ even: Bool) {
-		let m = fmt.string(from: Date())
+    func filelog(priority: LogPriority, _ args: String, _ eventid: String, _ logFile: String, _ even: Bool) {
+        // Validate level threshold first
+        guard priority >= threshold else { return }
+
+        var prefixList = [String]()
+
+        if options.contains(.priority) {
+            prefixList.append(priority.stringRepresentation(even: even))
+        }
+        if options.contains(.eventId) {
+            prefixList.append("[\(eventid)]")
+        }
+        if options.contains(.timestamp) {
+            prefixList.append("[\(fmt.string(from: Date()))]")
+        }
+
+        // Add a space to seperate the prefix list from the message when the list contains at least 1 value
+        let prefix = prefixList.count > 0 ? "\(prefixList.joined(separator: " ")) " : ""
+
 		var useFile = logFile
 		if logFile.isEmpty { useFile = defaultFile }
 		let ff = File(useFile)
 		defer { ff.close() }
 		do {
 			try ff.open(.append)
-			try ff.write(string: "\(priority) [\(eventid)] [\(m)] \(args)\n")
+			try ff.write(string: "\(prefix)\(args)\n")
 		} catch {
 			consoleEcho.critical(message: "\(error)", even)
 		}
@@ -52,32 +72,32 @@ struct FileLogger {
 
 	func debug(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.debug(message: message, even)
-		filelog(priority: even ? "[DEBUG]" : "[DEBUG]", message, eventid, logFile, even)
+        filelog(priority: .debug, message, eventid, logFile, even)
 	}
 
 	func info(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.info(message: message, even)
-		filelog(priority: even ? "[INFO] " : "[INFO]", message, eventid, logFile, even)
+        filelog(priority: .info, message, eventid, logFile, even)
 	}
 
 	func warning(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.warning(message: message, even)
-		filelog(priority: even ? "[WARN] " : "[WARNING]", message, eventid, logFile, even)
+        filelog(priority: .warning, message, eventid, logFile, even)
 	}
 
 	func error(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.error(message: message, even)
-		filelog(priority: even ? "[ERROR]" : "[ERROR]", message, eventid, logFile, even)
+        filelog(priority: .error, message, eventid, logFile, even)
 	}
 
 	func critical(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.critical(message: message, even)
-		filelog(priority: even ? "[CRIT] " : "[CRITICAL]", message, eventid, logFile, even)
+        filelog(priority: .critical, message, eventid, logFile, even)
 	}
 
 	func terminal(message: String, _ eventid: String, _ logFile: String, _ even: Bool) {
 		consoleEcho.terminal(message: message, even)
-		filelog(priority: even ? "[EMERG]" : "[EMERG]", message, eventid, logFile, even)
+        filelog(priority: .terminal, message, eventid, logFile, even)
 	}
 }
 
@@ -86,6 +106,44 @@ public struct LogFile {
 	private init(){}
 
 	static var logger = FileLogger()
+
+    /**
+     Threshold for priorties to log
+
+     e.g. when set to `.error` only error, critical and terminal messages will actually be logged
+     */
+    public static var threshold: LogPriority {
+        get {
+            return logger.threshold
+        }
+        set {
+            logger.threshold = newValue
+        }
+    }
+
+    /**
+     Log options that indicate which fields (e.g. priority, event ID) should be send to the log file.
+
+     To use the default set:
+
+     ```
+     LogFile.options = .default
+     ```
+
+     To use a custom set:
+
+     ```
+     LogFile.options = [.level, .timestamp]
+     ```
+     */
+    public static var options: LogOptions {
+        get {
+            return logger.options
+        }
+        set {
+            logger.options = newValue
+        }
+    }
 
 	/// The location of the log file.
 	/// The default location is relative, "log.log"
