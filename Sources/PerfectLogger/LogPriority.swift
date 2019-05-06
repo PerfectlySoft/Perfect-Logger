@@ -21,54 +21,54 @@
 import Foundation
 
 /**
- Priority of the message.
+Priority of the message.
 
- Either one of:
- * debug
- * info
- * warning
- * error
- * critical
- * terminal
- 
- */
+Either one of:
+* debug
+* info
+* warning
+* error
+* critical
+* terminal
+
+*/
 public enum LogPriority: Int {
-    case debug
-    case info
-    case warning
-    case error
-    case critical
-    case terminal
+	case debug
+	case info
+	case warning
+	case error
+	case critical
+	case terminal
 }
 
 internal extension LogPriority {
-    /**
-     Returns the string representation for this level.
-
-     If `even` set to true,  log messages will be inline with each other
-
-     - parameter even: Whether or not to even off the log messages
-
-     - returns: The string representation for this log level
-     */
-    func stringRepresentation(even: Bool) -> String {
-        switch self {
-        case .debug:    return "[DEBUG]"
-        case .info:     return even ? "[INFO] " : "[INFO]"
-        case .warning:  return even ? "[WARN] " : "[WARNING]"
-        case .error:    return "[ERROR]"
-        case .critical: return even ? "[CRIT] " : "[CRITICAL]"
-        case .terminal: return even ? "[EMERG]" : "[EMERG]"
-        }
-    }
+	/**
+	Returns the string representation for this level.
+	
+	If `even` set to true,  log messages will be inline with each other
+	
+	- parameter even: Whether or not to even off the log messages
+	
+	- returns: The string representation for this log level
+	*/
+	func stringRepresentation(even: Bool) -> String {
+		switch self {
+		case .debug:    return "[DEBUG]"
+		case .info:     return even ? "[INFO] " : "[INFO]"
+		case .warning:  return even ? "[WARN] " : "[WARNING]"
+		case .error:    return "[ERROR]"
+		case .critical: return even ? "[CRIT] " : "[CRITICAL]"
+		case .terminal: return even ? "[EMERG]" : "[EMERG]"
+		}
+	}
 }
 
 extension LogPriority: Comparable {
-    public static func >(lhs: LogPriority, rhs: LogPriority) -> Bool {
-        return lhs.rawValue > rhs.rawValue
-    }
-
-    public static func <(lhs: LogPriority, rhs: LogPriority) -> Bool {
-        return lhs.rawValue < rhs.rawValue
-    }
+	public static func >(lhs: LogPriority, rhs: LogPriority) -> Bool {
+		return lhs.rawValue > rhs.rawValue
+	}
+	
+	public static func <(lhs: LogPriority, rhs: LogPriority) -> Bool {
+		return lhs.rawValue < rhs.rawValue
+	}
 }

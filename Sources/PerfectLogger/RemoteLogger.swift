@@ -34,9 +34,9 @@ public struct RemoteLogger {
 	public static var even = false
 	
 	static let consoleEcho = ConsoleLogger()
-
+	
 	fileprivate init(){}
-
+	
 	static func log(priority: String, _ detail: [String:Any], _ eventid: String) throws {
 		let useragent = "PerfectServer2.0"
 		let logAPI = "/api/v1/log/"
@@ -51,15 +51,15 @@ public struct RemoteLogger {
 		} catch {
 			throw error
 		}
-
+		
 		var url = RemoteLogger.logServer + logAPI + RemoteLogger.token
-
+		
 		let curlObject = CURL(url: url)
 		curlObject.setOption(CURLOPT_HTTPHEADER, s: "Accept: application/json")
 		curlObject.setOption(CURLOPT_HTTPHEADER, s: "Cache-Control: no-cache")
 		curlObject.setOption(CURLOPT_USERAGENT, s: useragent)
-
-
+		
+		
 		if !body.isEmpty {
 			let byteArray = [UInt8](body.utf8)
 			curlObject.setOption(CURLOPT_POST, int: 1)
@@ -67,19 +67,19 @@ public struct RemoteLogger {
 			curlObject.setOption(CURLOPT_COPYPOSTFIELDS, v: UnsafeMutablePointer(mutating: byteArray))
 			curlObject.setOption(CURLOPT_HTTPHEADER, s: "Content-Type: application/json")
 		}
-
-
-
+		
+		
+		
 		var header = [UInt8]()
 		var bodyIn = [UInt8]()
-
+		
 		var code = 0
 		var data = [String: Any]()
 		var raw = [String: Any]()
-
+		
 		var perf = curlObject.perform()
 		defer { curlObject.close() }
-
+		
 		while perf.0 {
 			if let h = perf.2 {
 				header.append(contentsOf: h)
@@ -96,11 +96,11 @@ public struct RemoteLogger {
 			bodyIn.append(contentsOf: b)
 		}
 		let _ = perf.1
-
+		
 		// no need to parse. It's really just one way...
-
+		
 	}
-
+	
 	/// Logs a [DEBUG] message to the log server.
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
@@ -116,7 +116,7 @@ public struct RemoteLogger {
 		}
 		return eventid
 	}
-
+	
 	/// Logs a [INFO] message to the log server.
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
@@ -132,7 +132,7 @@ public struct RemoteLogger {
 		}
 		return eventid
 	}
-
+	
 	/// Logs a [WARNING] message to the log server.
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
@@ -148,7 +148,7 @@ public struct RemoteLogger {
 		}
 		return eventid
 	}
-
+	
 	/// Logs a [ERROR] message to the log server.
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
@@ -164,7 +164,7 @@ public struct RemoteLogger {
 		}
 		return eventid
 	}
-
+	
 	/// Logs a [CRIICAL] message to the log server.
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
@@ -180,7 +180,7 @@ public struct RemoteLogger {
 		}
 		return eventid
 	}
-
+	
 	/// Logs a [EMERG] message to the log server.
 	/// Also echoes the message to the console.
 	/// Specifiy a logFile parameter to direct the logging to a file other than the default.
