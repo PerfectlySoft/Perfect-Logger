@@ -1,41 +1,10 @@
 # Perfect Logging (File & Remote)
 
 <p align="center">
-    <a href="http://perfect.org/get-involved.html" target="_blank">
-        <img src="http://perfect.org/assets/github/perfect_github_2_0_0.jpg" alt="Get Involed with Perfect!" width="854" />
-    </a>
-</p>
-
-<p align="center">
-    <a href="https://github.com/PerfectlySoft/Perfect" target="_blank">
-        <img src="http://www.perfect.org/github/Perfect_GH_button_1_Star.jpg" alt="Star Perfect On Github" />
-    </a>  
-    <a href="http://stackoverflow.com/questions/tagged/perfect" target="_blank">
-        <img src="http://www.perfect.org/github/perfect_gh_button_2_SO.jpg" alt="Stack Overflow" />
-    </a>  
-    <a href="https://twitter.com/perfectlysoft" target="_blank">
-        <img src="http://www.perfect.org/github/Perfect_GH_button_3_twit.jpg" alt="Follow Perfect on Twitter" />
-    </a>  
-    <a href="http://perfect.ly" target="_blank">
-        <img src="http://www.perfect.org/github/Perfect_GH_button_4_slack.jpg" alt="Join the Perfect Slack" />
-    </a>
-</p>
-
-<p align="center">
-    <a href="https://developer.apple.com/swift/" target="_blank">
-        <img src="https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat" alt="Swift 3.0">
-    </a>
-    <a href="https://developer.apple.com/swift/" target="_blank">
-        <img src="https://img.shields.io/badge/Platforms-OS%20X%20%7C%20Linux%20-lightgray.svg?style=flat" alt="Platforms OS X | Linux">
-    </a>
-    <a href="http://perfect.org/licensing.html" target="_blank">
-        <img src="https://img.shields.io/badge/License-Apache-lightgrey.svg?style=flat" alt="License Apache">
-    </a>
-    <a href="http://twitter.com/PerfectlySoft" target="_blank">
-        <img src="https://img.shields.io/badge/Twitter-@PerfectlySoft-blue.svg?style=flat" alt="PerfectlySoft Twitter">
-    </a>
-    <a href="http://perfect.ly" target="_blank">
-        <img src="http://perfect.ly/badge.svg" alt="Slack Status">
+    <img src="https://img.shields.io/badge/Swift-6.2-orange.svg?style=flat" alt="Swift 6.2">
+    <img src="https://img.shields.io/badge/Platforms-macOS%2026%2B-lightgray.svg?style=flat" alt="Platforms macOS 26+">
+    <a href="LICENSE" target="_blank">
+        <img src="https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg?style=flat" alt="License Apache 2.0">
     </a>
 </p>
 
@@ -45,22 +14,51 @@
 > (`FileLogHandler`, `RemoteLogHandler`) that you bootstrap into the standard
 > swift-log system. Libraries can log against the plain swift-log `Logger`
 > façade and stay backend-agnostic; applications decide where the logs go.
+>
+> Both targets build under full Swift 6 language mode (`swiftSettings:
+> [.swiftLanguageMode(.v6)]`, strict concurrency checking on) and implement
+> swift-log's current, non-deprecated `LogHandler` requirement — this is a
+> small, modern, actively-buildable package, not a leftover from the original
+> pre-resurrection codebase.
 
 Using the `PerfectLogger` module, events can be logged to the console, to a file,
 and/or shipped to a remote collector — all through swift-log's `LogHandler` system.
+
+**Requires Swift 6.2 and macOS 26+** (per `Package.swift`; no Linux or iOS
+target is currently declared).
+
+## Where this fits in Perfect-Resurrection
+
+`PerfectLogger` is a leaf package in the [Perfect-Resurrection](https://github.com/taplin/Perfect-Resurrection)
+ecosystem — it has no dependency on any other Perfect-Resurrection package, and
+nothing in the graph depends on it except **PerfectTemplate**, which imports it
+in four of its source files today. Other core packages in the ecosystem
+(Perfect-Lasso, Perfect-NIO, etc.) deliberately log against raw swift-log
+(`import Logging`) directly rather than through this façade. That's not a sign
+`PerfectLogger` is unused or abandoned — it's the intended integration point
+for applications (like PerfectTemplate) that want the friendlier `LogFile`
+API and the file/remote handlers, while libraries elsewhere in the ecosystem
+stay backend-agnostic by talking to swift-log directly.
 
 ## Using in your project
 
 Add the dependency to your project's `Package.swift`:
 
 ``` swift
-.package(url: "https://github.com/taplin/Perfect-Logger.git", from: "4.0.0"),
+.package(url: "https://github.com/taplin/Perfect-Logger.git", from: "3.3.0"),
 ```
 
 …and add `PerfectLogger` to your target's dependencies. Then import it:
 
 ``` swift
 import PerfectLogger
+```
+
+## Building and testing this repo
+
+``` shell
+swift build
+swift test
 ```
 
 ## Bootstrapping
@@ -140,5 +138,12 @@ fire-and-forget (a failed POST never blocks or throws into the call site).
 Wire it up via `bootstrap(remoteServer:remoteToken:)` above, or construct it
 directly to combine with other handlers using swift-log's `MultiplexLogHandler`.
 
+## License
+
+Apache 2.0 — see [LICENSE](LICENSE).
+
 ## Further Information
-For more information on the Perfect project, please visit [perfect.org](http://perfect.org).
+
+`PerfectLogger` is part of Tim Taplin's [Perfect-Resurrection](https://github.com/taplin/Perfect-Resurrection)
+project, a Swift 6 rebuild of the original PerfectlySoft framework. Its only
+current consumer is `PerfectTemplate`; see that repo for it in real use.
