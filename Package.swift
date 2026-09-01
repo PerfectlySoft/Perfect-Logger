@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "PerfectLogger",
-    platforms: [.macOS(.v26)],
+    platforms: [.macOS(.v12)],
     products: [
         .library(name: "PerfectLogger", targets: ["PerfectLogger"]),
     ],

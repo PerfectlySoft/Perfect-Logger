@@ -2,50 +2,38 @@
 
 <p align="center">
     <img src="https://img.shields.io/badge/Swift-6.2-orange.svg?style=flat" alt="Swift 6.2">
-    <img src="https://img.shields.io/badge/Platforms-macOS%2026%2B-lightgray.svg?style=flat" alt="Platforms macOS 26+">
+    <img src="https://img.shields.io/badge/Platforms-macOS%2012%2B-lightgray.svg?style=flat" alt="Platforms macOS 12+">
     <a href="LICENSE" target="_blank">
         <img src="https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg?style=flat" alt="License Apache 2.0">
     </a>
 </p>
 
-> **Swift 6 resurrection note.** This package has been rebuilt on top of
-> [`apple/swift-log`](https://github.com/apple/swift-log). PerfectLogger now provides a
-> friendly Perfect-style façade (`LogFile`) plus two custom `LogHandler` backends
-> (`FileLogHandler`, `RemoteLogHandler`) that you bootstrap into the standard
-> swift-log system. Libraries can log against the plain swift-log `Logger`
-> façade and stay backend-agnostic; applications decide where the logs go.
->
-> Both targets build under full Swift 6 language mode (`swiftSettings:
-> [.swiftLanguageMode(.v6)]`, strict concurrency checking on) and implement
-> swift-log's current, non-deprecated `LogHandler` requirement — this is a
-> small, modern, actively-buildable package, not a leftover from the original
-> pre-resurrection codebase.
+**Rebuilt on [`apple/swift-log`](https://github.com/apple/swift-log).** PerfectLogger provides a
+friendly Perfect-style façade (`LogFile`) plus two custom `LogHandler` backends (`FileLogHandler`,
+`RemoteLogHandler`) that bootstrap into the standard swift-log system. Libraries log against the
+plain swift-log `Logger` and stay backend-agnostic; applications decide where logs go — to console,
+file, and/or a remote collector.
 
-Using the `PerfectLogger` module, events can be logged to the console, to a file,
-and/or shipped to a remote collector — all through swift-log's `LogHandler` system.
+Both targets build under full Swift 6 language mode with strict concurrency checking.
 
-**Requires Swift 6.2 and macOS 26+** (per `Package.swift`; no Linux or iOS
-target is currently declared).
+The pre-Swift-6 version is preserved on the [`legacy`](../../tree/legacy) branch.
 
-## Where this fits in Perfect-Resurrection
+## Where this fits
 
-`PerfectLogger` is a leaf package in the [Perfect-Resurrection](https://github.com/taplin/Perfect-Resurrection)
-ecosystem — it has no dependency on any other Perfect-Resurrection package, and
-nothing in the graph depends on it except **PerfectTemplate**, which imports it
-in four of its source files today. Other core packages in the ecosystem
-(Perfect-Lasso, Perfect-NIO, etc.) deliberately log against raw swift-log
-(`import Logging`) directly rather than through this façade. That's not a sign
-`PerfectLogger` is unused or abandoned — it's the intended integration point
-for applications (like PerfectTemplate) that want the friendlier `LogFile`
-API and the file/remote handlers, while libraries elsewhere in the ecosystem
-stay backend-agnostic by talking to swift-log directly.
+`PerfectLogger` is a leaf package — no dependency on any other package here, and currently only
+**PerfectTemplate** depends on it directly (in four of its source files). Other packages in this
+ecosystem (Perfect-Lasso, Perfect-NIO, etc.) deliberately log against raw swift-log (`import
+Logging`) directly rather than through this façade. That's not a sign `PerfectLogger` is unused —
+it's the intended integration point for applications that want the friendlier `LogFile` API and the
+file/remote handlers, while libraries elsewhere stay backend-agnostic by talking to swift-log
+directly.
 
 ## Using in your project
 
 Add the dependency to your project's `Package.swift`:
 
 ``` swift
-.package(url: "https://github.com/taplin/Perfect-Logger.git", from: "3.3.0"),
+.package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", branch: "main"),
 ```
 
 …and add `PerfectLogger` to your target's dependencies. Then import it:
