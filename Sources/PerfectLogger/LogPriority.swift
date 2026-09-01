@@ -1,74 +1,54 @@
-//
-//  LogPriority.swift
-//  PerfectLogger
-//
-//  Created by Michiel Horvers on 04/05/2019.
-//    Copyright (C) 2019 PerfectlySoft, Inc.
-//
-//===----------------------------------------------------------------------===//
-//
-// This source file is part of the Perfect.org open source project
-//
-// Copyright (c) 2015 - 2019 PerfectlySoft Inc. and the Perfect project authors
-// Licensed under Apache License v2.0
-//
-// See http://perfect.org/licensing.html for license information
-//
-//===----------------------------------------------------------------------===//
-//
+import Logging
 
+/// Friendly Perfect-style log levels. Bridges to swift-log's `Logger.Level`.
+///
+/// PerfectLogger is built on `apple/swift-log`; this enum exists so callers who
+/// prefer the original Perfect naming (`.terminal` for emergencies, etc.) keep a
+/// familiar surface. Internally everything maps onto `Logger.Level`.
+public enum LogPriority: Int, Comparable, Sendable {
+    case debug
+    case info
+    case warning
+    case error
+    case critical
+    /// Emergency — logged at `.critical` and (via `LogFile.terminal`) aborts the process.
+    case terminal
 
-import Foundation
+    public static func < (lhs: LogPriority, rhs: LogPriority) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
 
-/**
-Priority of the message.
+    /// The swift-log level this priority maps to.
+    public var level: Logger.Level {
+        switch self {
+        case .debug:    return .debug
+        case .info:     return .info
+        case .warning:  return .warning
+        case .error:    return .error
+        case .critical: return .critical
+        case .terminal: return .critical
+        }
+    }
 
-Either one of:
-* debug
-* info
-* warning
-* error
-* critical
-* terminal
+    /// Bracketed label used by ``FileLogHandler`` when ``LogOptions/priority`` is set.
+    func label(even: Bool) -> String {
+        switch self {
+        case .debug:    return "[DEBUG]"
+        case .info:     return even ? "[INFO] " : "[INFO]"
+        case .warning:  return even ? "[WARN] " : "[WARNING]"
+        case .error:    return "[ERROR]"
+        case .critical: return even ? "[CRIT] " : "[CRITICAL]"
+        case .terminal: return "[EMERG]"
+        }
+    }
 
-*/
-public enum LogPriority: Int {
-	case debug
-	case info
-	case warning
-	case error
-	case critical
-	case terminal
-}
-
-internal extension LogPriority {
-	/**
-	Returns the string representation for this level.
-	
-	If `even` set to true,  log messages will be inline with each other
-	
-	- parameter even: Whether or not to even off the log messages
-	
-	- returns: The string representation for this log level
-	*/
-	func stringRepresentation(even: Bool) -> String {
-		switch self {
-		case .debug:    return "[DEBUG]"
-		case .info:     return even ? "[INFO] " : "[INFO]"
-		case .warning:  return even ? "[WARN] " : "[WARNING]"
-		case .error:    return "[ERROR]"
-		case .critical: return even ? "[CRIT] " : "[CRITICAL]"
-		case .terminal: return even ? "[EMERG]" : "[EMERG]"
-		}
-	}
-}
-
-extension LogPriority: Comparable {
-	public static func >(lhs: LogPriority, rhs: LogPriority) -> Bool {
-		return lhs.rawValue > rhs.rawValue
-	}
-	
-	public static func <(lhs: LogPriority, rhs: LogPriority) -> Bool {
-		return lhs.rawValue < rhs.rawValue
-	}
+    init(_ level: Logger.Level) {
+        switch level {
+        case .trace, .debug:       self = .debug
+        case .info, .notice:       self = .info
+        case .warning:             self = .warning
+        case .error:               self = .error
+        case .critical:            self = .critical
+        }
+    }
 }

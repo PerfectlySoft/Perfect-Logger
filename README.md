@@ -1,225 +1,137 @@
 # Perfect Logging (File & Remote)
 
 <p align="center">
-    <a href="http://perfect.org/get-involved.html" target="_blank">
-        <img src="http://perfect.org/assets/github/perfect_github_2_0_0.jpg" alt="Get Involed with Perfect!" width="854" />
+    <img src="https://img.shields.io/badge/Swift-6.2-orange.svg?style=flat" alt="Swift 6.2">
+    <img src="https://img.shields.io/badge/Platforms-macOS%2012%2B-lightgray.svg?style=flat" alt="Platforms macOS 12+">
+    <a href="LICENSE" target="_blank">
+        <img src="https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg?style=flat" alt="License Apache 2.0">
     </a>
 </p>
 
-<p align="center">
-    <a href="https://github.com/PerfectlySoft/Perfect" target="_blank">
-        <img src="http://www.perfect.org/github/Perfect_GH_button_1_Star.jpg" alt="Star Perfect On Github" />
-    </a>  
-    <a href="http://stackoverflow.com/questions/tagged/perfect" target="_blank">
-        <img src="http://www.perfect.org/github/perfect_gh_button_2_SO.jpg" alt="Stack Overflow" />
-    </a>  
-    <a href="https://twitter.com/perfectlysoft" target="_blank">
-        <img src="http://www.perfect.org/github/Perfect_GH_button_3_twit.jpg" alt="Follow Perfect on Twitter" />
-    </a>  
-    <a href="http://perfect.ly" target="_blank">
-        <img src="http://www.perfect.org/github/Perfect_GH_button_4_slack.jpg" alt="Join the Perfect Slack" />
-    </a>
-</p>
+**Rebuilt on [`apple/swift-log`](https://github.com/apple/swift-log).** PerfectLogger provides a
+friendly Perfect-style façade (`LogFile`) plus two custom `LogHandler` backends (`FileLogHandler`,
+`RemoteLogHandler`) that bootstrap into the standard swift-log system. Libraries log against the
+plain swift-log `Logger` and stay backend-agnostic; applications decide where logs go — to console,
+file, and/or a remote collector.
 
-<p align="center">
-    <a href="https://developer.apple.com/swift/" target="_blank">
-        <img src="https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat" alt="Swift 3.0">
-    </a>
-    <a href="https://developer.apple.com/swift/" target="_blank">
-        <img src="https://img.shields.io/badge/Platforms-OS%20X%20%7C%20Linux%20-lightgray.svg?style=flat" alt="Platforms OS X | Linux">
-    </a>
-    <a href="http://perfect.org/licensing.html" target="_blank">
-        <img src="https://img.shields.io/badge/License-Apache-lightgrey.svg?style=flat" alt="License Apache">
-    </a>
-    <a href="http://twitter.com/PerfectlySoft" target="_blank">
-        <img src="https://img.shields.io/badge/Twitter-@PerfectlySoft-blue.svg?style=flat" alt="PerfectlySoft Twitter">
-    </a>
-    <a href="http://perfect.ly" target="_blank">
-        <img src="http://perfect.ly/badge.svg" alt="Slack Status">
-    </a>
-</p>
+Both targets build under full Swift 6 language mode with strict concurrency checking.
 
-Using the `PerfectLogger` module, events can be logged to a specfied file, in addition to the console.
+The pre-Swift-6 version is preserved on the [`legacy`](../../tree/legacy) branch.
 
-Support is also included in this module for remote logging events to the [Perfect Log Server](https://github.com/PerfectServers/Perfect-LogServer).
+## Where this fits
+
+`PerfectLogger` is a leaf package — no dependency on any other package here, and currently only
+**PerfectTemplate** depends on it directly (in four of its source files). Other packages in this
+ecosystem (Perfect-Lasso, Perfect-NIO, etc.) deliberately log against raw swift-log (`import
+Logging`) directly rather than through this façade. That's not a sign `PerfectLogger` is unused —
+it's the intended integration point for applications that want the friendlier `LogFile` API and the
+file/remote handlers, while libraries elsewhere stay backend-agnostic by talking to swift-log
+directly.
 
 ## Using in your project
 
-Add the dependancy to your project's Package.swift file:
+Add the dependency to your project's `Package.swift`:
 
 ``` swift
-.Package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", majorVersion: 3),
+.package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", branch: "main"),
 ```
 
-Now add the `import` directive to the file you wish to use the logging in:
+…and add `PerfectLogger` to your target's dependencies. Then import it:
 
 ``` swift
 import PerfectLogger
 ```
 
-To log events to the local console as well as a file:
+## Building and testing this repo
+
+``` shell
+swift build
+swift test
+```
+
+## Bootstrapping
+
+Call `PerfectLogger.bootstrap(...)` once, early in app startup. It wires any
+combination of console, file, and remote handlers into swift-log's global
+`LoggingSystem` (which may only be bootstrapped a single time per process):
 
 ``` swift
-LogFile.debug("debug message", logFile: "test.txt")
-LogFile.info("info message", logFile: "test.txt")
-LogFile.warning("warning message", logFile: "test.txt")
-LogFile.error("error message", logFile: "test.txt")
-LogFile.critical("critical message", logFile: "test.txt")
-LogFile.terminal("terminal message", logFile: "test.txt")
+PerfectLogger.bootstrap(
+    console: true,                       // echo to stdout
+    file: "/var/log/myapp.log",          // append structured lines to a file
+    remoteServer: "https://logs.example.com",
+    remoteToken: "<your token>",
+    level: .info                         // minimum level for all handlers
+)
 ```
 
-To log to the default file, omit the file name parameter.
+Every argument except `console` is optional — pass only what you need.
 
-## Linking events with "eventid"
+## Friendly façade: `LogFile`
 
-Each log event returns an event id string. If an eventid string is supplied to the directive then it will use the supplied eventid in the log file instead - this makes it easy to link together related events.
+`LogFile` keeps the original ergonomic Perfect surface. Each call returns a
+reusable **event id** so related events can be correlated:
 
 ``` swift
-let eid = LogFile.warning("test 1")
-LogFile.critical("test 2", eventid: eid)
+let eid = LogFile.warning("payment retry scheduled")
+LogFile.critical("payment failed", eventid: eid)   // same id → linked events
 ```
 
-returns:
+With the file handler's default options the file receives:
 
 ```
-[WARNING] [62f940aa-f204-43ed-9934-166896eda21c] [2016-11-16 15:18:02 GMT-05:00] test 1
-[CRITICAL] [62f940aa-f204-43ed-9934-166896eda21c] [2016-11-16 15:18:02 GMT-05:00] test 2
+[WARNING] [62f940aa-f204-43ed-9934-166896eda21c] [2026-06-21 15:18:02 GMT-05:00] payment retry scheduled
+[CRITICAL] [62f940aa-f204-43ed-9934-166896eda21c] [2026-06-21 15:18:02 GMT-05:00] payment failed
 ```
 
-The returned eventid is marked `@discardableResult` therefore can be safely ignored if not required for re-use.
+The returned eventid is `@discardableResult`, so it can be ignored when not needed.
 
+`LogFile` delegates to a swift-log `Logger`. To gate output or retarget it without
+re-bootstrapping, set `LogFile.logger` or `LogFile.logger.logLevel`.
 
-## Customization
+## Logging from a library (swift-log façade)
 
-### Setting a custom Logfile location
-
-The default logfile location is `./log.log`. To set a custom logfile location, set the `LogFile.location` variable:
+Libraries should log against a plain swift-log `Logger` and let the host app
+choose the backend — no hard dependency on the file/remote handlers:
 
 ``` swift
-LogFile.location = "/var/log/myLog.log"
+import Logging
+
+let logger = Logger(label: "com.example.MyLibrary")
+logger.error("connection failed", metadata: ["eventid": "\(UUID().uuidString)"])
 ```
 
-Messages can now be logged directly to the file as set by using:
+## File line format: `LogOptions`
+
+`FileLogHandler` controls its prefix fields via `LogOptions`:
 
 ``` swift
-LogFile.debug("debug message")
-LogFile.info("info message")
-LogFile.warning("warning message")
-LogFile.error("error message")
-LogFile.critical("critical message")
-LogFile.terminal("terminal message")
+FileLogHandler(label: "app", path: "/var/log/app.log", options: .default)
+// "[ERROR] [<eventid>] [2026-06-21 15:18:02 GMT-05:00] message"
+
+FileLogHandler(label: "app", path: "/var/log/app.log", options: .none)
+// "message"
+
+FileLogHandler(label: "app", path: "/var/log/app.log", options: [.priority, .timestamp])
+// "[ERROR] [2026-06-21 15:18:02 GMT-05:00] message"
 ```
 
-### LogFile threshold
+The event id is read from the `eventid` metadata key (which `LogFile` sets
+automatically).
 
-For debug purposes, you want to see as much info as available. However, on production servers you probably desire a
-smaller logfile and filter out all redundant info.
+## Remote logging
 
-To do so, you may set the LogFile's `threshold` property to the minumum priority you want to actually being logged into the file.
+`RemoteLogHandler` POSTs each event to `<server>/api/v1/log/<token>` as JSON,
+fire-and-forget (a failed POST never blocks or throws into the call site).
+Wire it up via `bootstrap(remoteServer:remoteToken:)` above, or construct it
+directly to combine with other handlers using swift-log's `MultiplexLogHandler`.
 
-e.g.:
+## License
 
-```swift
-LogFile.threshold = .warning
-LogFile.debug("This won't be logged into the file")
-LogFile.info("This won't be logged into the file")
-LogFile.warning("This will be logged into the file")
-LogFile.error("This will be logged into the file")
-LogFile.critical("This will be logged into the file")
-```
-
-The default value of this property is `.debug` to preserve backward compatibility and this property will not affect the Console/Remote logger.
-
-### LogFile options
-
-Depending on your needs, you may not be interested in an event id, timestamp or priority.
-
-Using the LogFile's `options` property you can customize which of those fields will actually be added as a prefix to the log message.
-
-e.g.:
-
-```swift
-// Default behaviour (equal to `[.priority, .eventId, .timestamp]`)
-LogFile.options = .default
-LogFile.debug("This is my log message")
-// Will log: "[DEBUG] [CEC5B5DB-931F-4C5A-A794-17D060BABC80] [2019-05-04 15:16:11 GMT+02:00] This is my log message"
-
-LogFile.options = .none
-LogFile.debug("This is my log message")
-// Will log: "This is my log message"
-
-LogFile.options = [.priority, .timestamp]
-LogFile.debug("This is my log message")
-// Will log: "[DEBUG] [2019-05-04 15:16:11 GMT+02:00] This is my log message"
-
-LogFile.options = [.priority]
-LogFile.debug("This is my log message")
-// Will log: "[DEBUG] This is my log message"
-```
-
-
-## Sample output
-
-```
-[DEBUG] [ec6a9ca5-00b1-4656-9e4c-ddecae8dde02] [2016-11-16 15:18:02 GMT-05:00] a debug message
-[INFO] [ec6a9ca5-00b1-4656-9e4c-ddecae8dde02] [2016-11-16 15:18:02 GMT-05:00] an informational message
-[WARNING] [ec6a9ca5-00b1-4656-9e4c-ddecae8dde02] [2016-11-16 15:18:02 GMT-05:00] a warning message
-[ERROR] [62f940aa-f204-43ed-9934-166896eda21c] [2016-11-16 15:18:02 GMT-05:00] an error message
-[CRITICAL] [62f940aa-f204-43ed-9934-166896eda21c] [2016-11-16 15:18:02 GMT-05:00] a critical message
-[EMERG] [ec6a9ca5-00b1-4656-9e4c-ddecae8dde02] [2016-11-16 15:18:02 GMT-05:00] an emergency message
-```
-
-## Remote Logging
-
-The "Perfect-Logging" dependency includes support for remote logging to this log server.
-
-To include the dependency in your project, add the following to your project's Package.swift file:
-
-``` swift
-.Package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", majorVersion: 3),
-```
-
-Now add the import directive to the file you wish to use the logging in:
-
-``` swift 
-import PerfectLogger
-```
-
-#### Configuration
-Three configuration parameters are required:
-
-``` swift
-// Your token
-RemoteLogger.token = "<your token>"
-
-// App ID (Optional)
-RemoteLogger.appid = "<your appid>"
-
-// URL to access the log server. 
-// Note, this is not the full API path, just the host and port.
-RemoteLogger.logServer = "http://localhost:8181"
-
-```
-
-
-#### To log events to the log server:
-
-``` swift
-var obj = [String: Any]()
-obj["one"] = "donkey"
-RemoteLogger.critical(obj)
-```
-
-#### Linking events with "eventid"
-
-Each log event returns an event id string. If an eventid string is supplied to the directive then it will use the supplied eventid in the log directive instead - this makes it easy to link together related events.
-
-``` swift
-let eid = RemoteLogger.critical(obj)
-RemoteLogger.info(obj, eventid: eid)
-```
-
-The returned eventid is marked @discardableResult therefore can be safely ignored if not required for re-use.
+Apache 2.0 — see [LICENSE](LICENSE).
 
 ## Further Information
-For more information on the Perfect project, please visit [perfect.org](http://perfect.org).
+
+`PerfectLogger` is part of Tim Taplin's [Perfect-Resurrection](https://github.com/taplin/Perfect-Resurrection)
+project, a Swift 6 rebuild of the original PerfectlySoft framework. Its only
+current consumer is `PerfectTemplate`; see that repo for it in real use.
