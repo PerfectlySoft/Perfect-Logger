@@ -1,10 +1,10 @@
-/// Controls which prefix fields ``FileLogHandler`` writes ahead of each message.
+/// Controls which fields ``FileLogHandler`` writes around each message.
 public struct LogOptions: OptionSet, Sendable {
     public let rawValue: Int
     public init(rawValue: Int) { self.rawValue = rawValue }
 
-    /// All prefix fields: priority, event ID, and timestamp.
-    public static let `default`: LogOptions = [.priority, .eventId, .timestamp]
+    /// Priority, event ID and timestamp prefixes, plus any extra metadata.
+    public static let `default`: LogOptions = [.priority, .eventId, .timestamp, .metadata]
 
     /// No prefix — write the message only.
     public static let none: LogOptions = []
@@ -17,4 +17,9 @@ public struct LogOptions: OptionSet, Sendable {
 
     /// Writes a timestamp (e.g. `[2024-01-02 15:04:05 GMT]`).
     public static let timestamp = LogOptions(rawValue: 1 << 2)
+
+    /// Appends metadata other than `eventid` after the message as sorted
+    /// `key=value` pairs (e.g. `message request=42 user=tim`). Lines whose only
+    /// metadata is the event ID are unaffected.
+    public static let metadata  = LogOptions(rawValue: 1 << 3)
 }
