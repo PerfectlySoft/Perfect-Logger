@@ -433,7 +433,8 @@ struct PerfectLoggerTests {
         #expect(recorder.count == 11)
         #expect(recorder.maxInFlight == 1)
         let bodies = recorder.requests.compactMap { $0.httpBody.map { String(decoding: $0, as: UTF8.self) } }
-        #expect(bodies == ["first"] + (0..<10).map(String.init))
+        let expected: [String] = ["first"] + (0..<10).map { String($0) }
+        #expect(bodies == expected)
 
         // The sink keeps working after draining.
         sink.enqueue(Data("again".utf8))
