@@ -1,8 +1,8 @@
 # Perfect Logging (File & Remote)
 
 <p align="center">
-    <img src="https://img.shields.io/badge/Swift-6.2-orange.svg?style=flat" alt="Swift 6.2">
-    <img src="https://img.shields.io/badge/Platforms-macOS%2012%2B-lightgray.svg?style=flat" alt="Platforms macOS 12+">
+    <img src="https://img.shields.io/badge/Swift-6.2%2B-orange.svg?style=flat" alt="Swift 6.2+">
+    <img src="https://img.shields.io/badge/Platforms-macOS%2012%2B%20%7C%20Linux-lightgray.svg?style=flat" alt="Platforms macOS 12+ | Linux">
     <a href="LICENSE" target="_blank">
         <img src="https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg?style=flat" alt="License Apache 2.0">
     </a>
@@ -16,7 +16,15 @@ file, and/or a remote collector.
 
 Both targets build under full Swift 6 language mode with strict concurrency checking.
 
-The pre-Swift-6 version is preserved on the [`legacy`](../../tree/legacy) branch.
+The pre-Swift-6 version (3.x) is preserved on the [`legacy`](../../tree/legacy) branch; see
+[Migrating from 3.x](#migrating-from-3x).
+
+## Requirements
+
+- Swift 6.2 or later (`swift-tools-version: 6.2`, Swift 6 language mode).
+- macOS 12 or later, or Linux. CI covers Swift 6.2 and 6.4 on Ubuntu 24.04 and Xcode 26.0.1
+  and 26.6 on macOS, in debug and release, with warnings as errors.
+- [`apple/swift-log`](https://github.com/apple/swift-log) 1.12.0 or later.
 
 ## Where this fits
 
@@ -33,7 +41,7 @@ directly.
 Add the dependency to your project's `Package.swift`:
 
 ``` swift
-.package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", branch: "main"),
+.package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", from: "4.0.0"),
 ```
 
 …and add `PerfectLogger` to your target's dependencies. Then import it:
@@ -65,7 +73,11 @@ PerfectLogger.bootstrap(
 )
 ```
 
-Every argument except `console` is optional — pass only what you need.
+Every argument is optional — pass only what you need. `remoteServer` needs a `remoteToken`; if
+it is missing (or the server isn't an http(s) URL without a query or fragment) remote logging is
+disabled with a warning on standard error. Likewise, a log file that can't be opened is reported
+once on standard error and skipped. An optional `metadataProvider:` is installed as swift-log's global metadata provider and
+merged into every handler's output.
 
 ## Friendly façade: `LogFile`
 
@@ -87,7 +99,23 @@ With the file handler's default options the file receives:
 The returned eventid is `@discardableResult`, so it can be ignored when not needed.
 
 `LogFile` delegates to a swift-log `Logger`. To gate output or retarget it without
-re-bootstrapping, set `LogFile.logger` or `LogFile.logger.logLevel`.
+re-bootstrapping, set `LogFile.logger` or `LogFile.logger.logLevel`. Each read and write of
+`LogFile.logger` is thread-safe, but `LogFile.logger.logLevel = x` is a read followed by a write,
+so racing it against `LogFile.logger = y` can lose one of the two.
+
+`bootstrap` rebinds the default `LogFile.logger`, so `LogFile` calls made before bootstrapping
+don't stick to swift-log's default backend. If you changed the default logger before
+bootstrapping (say, `LogFile.logger.logLevel = .debug`), it is rebuilt on the new backend with the
+same level and metadata. A logger with your own label is left alone.
+
+`LogFile` creates its logger on first use, which runs the `LoggingSystem` factory. Log calls the
+factory itself makes through `LogFile` are dropped rather than recursing. That guard only covers
+re-entry on the same thread, so a factory must not block waiting on another thread that uses
+`LogFile`. A file path that can't be opened when the logger is created — for example a FIFO with
+no reader yet — stays disabled for that logger, so `LogFile` never writes to it.
+
+`LogFile.terminal(_:)` logs at `.critical` with `perfect.priority=terminal` metadata, written as
+`[EMERG]` by the file handler, and then aborts the process.
 
 ## Logging from a library (swift-log façade)
 
@@ -117,7 +145,29 @@ FileLogHandler(label: "app", path: "/var/log/app.log", options: [.priority, .tim
 ```
 
 The event id is read from the `eventid` metadata key (which `LogFile` sets
-automatically).
+automatically). Timestamps use the `en_US_POSIX` locale and the Gregorian calendar in the
+process's time zone, so the format doesn't change with the user's locale.
+
+Other metadata — from the handler, its `metadataProvider`, the log call, or a logged `error:` —
+is appended after the message as sorted `key=value` pairs when `.metadata` is in the options
+(it is in `.default`). Lines whose only metadata is the event id look exactly as above:
+
+```
+[ERROR] [<eventid>] [2026-06-21 15:18:02 GMT-05:00] payment failed note="two words" order=1182 user=tim
+```
+
+Keys and values are escaped so metadata can't start a new line or blur a pair: `\`, `"`, newline,
+carriage return and tab become `\\`, `\"`, `\n`, `\r` and `\t`, other control characters become
+`\u{1b}` and so on, and anything empty or containing a space, `=` or `"` is double-quoted. Nested
+dictionaries are written with sorted keys (`d="[a: 1, b: 2]"`). The message itself is written as is.
+
+The file is opened in append mode and each line is a single write, so several processes can share
+a log file and `logrotate`'s `copytruncate` works. A write that fails (for example on a full disk)
+is dropped, and the handler tries to end a partly written line so the next one starts cleanly. A FIFO with no
+reader, a directory or a socket is refused with a warning rather than blocking or failing later,
+and a pipe whose reader goes away gives `EPIPE` rather than `SIGPIPE`. The handler can't protect
+you from everything: exceeding `RLIMIT_FSIZE` still raises `SIGXFSZ`, and a write to a FIFO or
+device that blocks blocks the logging thread.
 
 ## Remote logging
 
@@ -125,6 +175,35 @@ automatically).
 fire-and-forget (a failed POST never blocks or throws into the call site).
 Wire it up via `bootstrap(remoteServer:remoteToken:)` above, or construct it
 directly to combine with other handlers using swift-log's `MultiplexLogHandler`.
+
+The body is an object with `level`, `label`, `source`, `eventid`, `message`, `timestamp`
+(ISO 8601, UTC) and, when there is metadata besides the event id, `metadata` (string values).
+Events are queued per collector and sent one at a time. Each POST gets at most 10 seconds,
+however slowly the server answers; after that it's cancelled and the next event goes. At most
+`RemoteLogHandler.maxPendingEvents` (1,000) wait; beyond that new events are dropped. Events still
+queued when the process exits are lost.
+
+The token is part of the URL path (as in 3.x), so use HTTPS and keep the collector's URL out of
+access logs you don't control.
+
+## Migrating from 3.x
+
+4.0 is built on swift-log and drops the Perfect-CURL dependency. Most call sites keep compiling:
+`LogFile.debug/info/warning/error/critical/terminal(_:eventid:)` still return the event id, and
+`LogPriority` and `LogOptions` keep their cases.
+
+- **Configure destinations once with `PerfectLogger.bootstrap(...)`** instead of setting
+  `LogFile.location`, `LogFile.options`, `LogFile.even` and `LogFile.threshold`. Use
+  `bootstrap(file:fileOptions:level:)`, or build a `FileLogHandler(label:path:options:even:)`.
+- **The `logFile:` and `evenIdents:` arguments are gone** from the `LogFile` calls; one process
+  logs to the destinations it bootstrapped.
+- **`RemoteLogger` is replaced by `RemoteLogHandler`.** Pass `remoteServer:` and `remoteToken:` to
+  `bootstrap`. The 3.x `[String: Any]` detail dictionaries become a message plus swift-log
+  metadata. The endpoint is the same, but the JSON body is not: 3.x sent `appuuid`, `eventid`,
+  `loglevel` and `detail`, so a collector written for 3.x needs to read the 4.0 fields above.
+- **There is no separate console echo:** `bootstrap(console: true)` adds swift-log's stdout
+  handler, whose format differs from 3.x's console lines.
+- The file line format is the same as 3.x for events without extra metadata.
 
 ## License
 
