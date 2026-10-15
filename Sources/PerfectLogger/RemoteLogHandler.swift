@@ -64,7 +64,7 @@ public struct RemoteLogHandler: LogHandler {
             eventid: eventid,
             message: event.message.description,
             timestamp: Date().formatted(.iso8601),
-            metadata: merged.isEmpty ? nil : merged.mapValues { "\($0)" }
+            metadata: merged.isEmpty ? nil : merged.mapValues(renderMetadataValue)
         )
         guard let body = try? JSONEncoder().encode(entry) else { return }
         sink.enqueue(body)
@@ -89,8 +89,13 @@ final class RemoteSink: @unchecked Sendable {
 
     static let defaultCapacity = 1_000
 
+    /// Hard limit, in seconds, on each POST, enforced by ``send(_:)`` whatever the
+    /// transport does.
+    static let defaultTimeout: TimeInterval = 10
+
     let url: URL
     private let capacity: Int
+    private let timeout: TimeInterval
     private let transport: Transport
 
     private let lock = NSLock()
@@ -99,9 +104,15 @@ final class RemoteSink: @unchecked Sendable {
     private var draining = false
     private var droppedCount = 0
 
-    init(url: URL, capacity: Int = RemoteSink.defaultCapacity, transport: @escaping Transport = RemoteSink.urlSession) {
+    init(
+        url: URL,
+        capacity: Int = RemoteSink.defaultCapacity,
+        timeout: TimeInterval = RemoteSink.defaultTimeout,
+        transport: @escaping Transport = RemoteSink.urlSession
+    ) {
         self.url = url
         self.capacity = capacity
+        self.timeout = timeout
         self.transport = transport
     }
 
@@ -149,16 +160,83 @@ final class RemoteSink: @unchecked Sendable {
 
     private func drain() async {
         while let body = next() {
-            var request = URLRequest(url: url, timeoutInterval: 10)
+            var request = URLRequest(url: url, timeoutInterval: timeout)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = body
-            await transport(request)
+            await send(request)
         }
     }
 
+    /// Runs the transport for `request`, but returns after ``timeout`` seconds
+    /// even if the transport hasn't: the transport's task is then cancelled and
+    /// left to finish on its own. This bounds a server that never answers or
+    /// trickles its response, which `URLRequest.timeoutInterval` (an idle
+    /// timeout, and ignored by Linux's `URLSession.shared`) does not.
+    func send(_ request: URLRequest) async {
+        let transport = self.transport
+        let timeout = self.timeout
+        let race = Race()
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            race.start(continuation)
+            race.add(Task {
+                await transport(request)
+                race.finish()
+            })
+            race.add(Task {
+                try? await Task.sleep(nanoseconds: UInt64(max(0, timeout) * 1_000_000_000))
+                race.finish()
+            })
+        }
+    }
+
+    /// Resumes a continuation once, when the first of its tasks finishes, and
+    /// cancels the others.
+    private final class Race: @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<Void, Never>?
+        private var tasks: [Task<Void, Never>] = []
+        private var finished = false
+
+        func start(_ continuation: CheckedContinuation<Void, Never>) {
+            lock.lock()
+            defer { lock.unlock() }
+            self.continuation = continuation
+        }
+
+        func add(_ task: Task<Void, Never>) {
+            lock.lock()
+            let done = finished
+            if !done { tasks.append(task) }
+            lock.unlock()
+            if done { task.cancel() }
+        }
+
+        func finish() {
+            lock.lock()
+            guard !finished else { lock.unlock(); return }
+            finished = true
+            let continuation = self.continuation
+            let tasks = self.tasks
+            self.continuation = nil
+            self.tasks = []
+            lock.unlock()
+            tasks.forEach { $0.cancel() }
+            continuation?.resume()
+        }
+    }
+
+    /// An ephemeral session whose request and resource timeouts match
+    /// ``defaultTimeout``, so the URL loading system gives up too.
+    static let session: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = defaultTimeout
+        configuration.timeoutIntervalForResource = defaultTimeout
+        return URLSession(configuration: configuration)
+    }()
+
     static let urlSession: Transport = { request in
-        _ = try? await URLSession.shared.data(for: request)
+        _ = try? await session.data(for: request)
     }
 
     // MARK: Registry
@@ -195,7 +273,7 @@ final class RemoteSink: @unchecked Sendable {
               let encoded = token.addingPercentEncoding(withAllowedCharacters: allowed),
               let url = URL(string: "\(base)/api/v1/log/\(encoded)"),
               let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
-              url.host != nil
+              url.host != nil, url.query == nil, url.fragment == nil
         else { return nil }
         return url
     }

@@ -44,7 +44,7 @@ public enum LogPriority: Int, Comparable, Sendable {
 
     /// Metadata key ``LogFile/terminal(_:eventid:)`` sets (to `"terminal"`) so
     /// handlers can tell an emergency from an ordinary `.critical` event.
-    static let metadataKey = "priority"
+    static let metadataKey = "perfect.priority"
 
     /// The priority of `event`: `.terminal` for a `.critical` event tagged by
     /// ``LogFile/terminal(_:eventid:)``, otherwise the mapping of its level.

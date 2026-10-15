@@ -43,8 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The oldest Xcode with Swift 6.2, and the runner's default. Swift 6.2 miscompiled an
-        # existential in release builds that newer compilers handle, so both matter.
+        # The oldest Xcode with Swift 6.2, and the runner's default.
         xcode: ["26.0.1", "26.6"]
         configuration: [debug, release]
     steps:

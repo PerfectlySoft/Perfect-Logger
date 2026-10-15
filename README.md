@@ -74,9 +74,9 @@ PerfectLogger.bootstrap(
 ```
 
 Every argument is optional — pass only what you need. `remoteServer` needs a `remoteToken`; if
-it is missing (or the server isn't an http(s) URL) remote logging is disabled with a warning on
-standard error. Likewise, a log file that can't be opened is reported once on standard error and
-skipped. An optional `metadataProvider:` is installed as swift-log's global metadata provider and
+it is missing (or the server isn't an http(s) URL without a query or fragment) remote logging is
+disabled with a warning on standard error. Likewise, a log file that can't be opened is reported
+once on standard error and skipped. An optional `metadataProvider:` is installed as swift-log's global metadata provider and
 merged into every handler's output.
 
 ## Friendly façade: `LogFile`
@@ -99,12 +99,17 @@ With the file handler's default options the file receives:
 The returned eventid is `@discardableResult`, so it can be ignored when not needed.
 
 `LogFile` delegates to a swift-log `Logger`. To gate output or retarget it without
-re-bootstrapping, set `LogFile.logger` or `LogFile.logger.logLevel` (both thread-safe).
-`bootstrap` rebinds the default `LogFile.logger`, so `LogFile` calls made before bootstrapping
-don't stick to swift-log's default backend.
+re-bootstrapping, set `LogFile.logger` or `LogFile.logger.logLevel`. Each read and write of
+`LogFile.logger` is thread-safe, but `LogFile.logger.logLevel = x` is a read followed by a write,
+so racing it against `LogFile.logger = y` can lose one of the two.
 
-`LogFile.terminal(_:)` logs at `.critical`, written as `[EMERG]` by the file handler, and then
-aborts the process.
+`bootstrap` rebinds the default `LogFile.logger`, so `LogFile` calls made before bootstrapping
+don't stick to swift-log's default backend. If you changed the default logger before
+bootstrapping (say, `LogFile.logger.logLevel = .debug`), it is rebuilt on the new backend with the
+same level and metadata. A logger with your own label is left alone.
+
+`LogFile.terminal(_:)` logs at `.critical` with `perfect.priority=terminal` metadata, written as
+`[EMERG]` by the file handler, and then aborts the process.
 
 ## Logging from a library (swift-log façade)
 
@@ -142,12 +147,21 @@ is appended after the message as sorted `key=value` pairs when `.metadata` is in
 (it is in `.default`). Lines whose only metadata is the event id look exactly as above:
 
 ```
-[ERROR] [<eventid>] [2026-06-21 15:18:02 GMT-05:00] payment failed order=1182 user=tim
+[ERROR] [<eventid>] [2026-06-21 15:18:02 GMT-05:00] payment failed note="two words" order=1182 user=tim
 ```
+
+Keys and values are escaped so metadata can't start a new line or blur a pair: `\`, `"`, newline,
+carriage return and tab become `\\`, `\"`, `\n`, `\r` and `\t`, other control characters become
+`\u{1b}` and so on, and anything empty or containing a space, `=` or `"` is double-quoted. Nested
+dictionaries are written with sorted keys (`d="[a: 1, b: 2]"`). The message itself is written as is.
 
 The file is opened in append mode and each line is a single write, so several processes can share
 a log file and `logrotate`'s `copytruncate` works. A write that fails (for example on a full disk)
-is dropped; logging never crashes the process.
+is dropped, and the handler tries to end a partly written line so the next one starts cleanly. A FIFO with no
+reader, a directory or a socket is refused with a warning rather than blocking or failing later,
+and a pipe whose reader goes away gives `EPIPE` rather than `SIGPIPE`. The handler can't protect
+you from everything: exceeding `RLIMIT_FSIZE` still raises `SIGXFSZ`, and a write to a FIFO or
+device that blocks blocks the logging thread.
 
 ## Remote logging
 
@@ -158,7 +172,8 @@ directly to combine with other handlers using swift-log's `MultiplexLogHandler`.
 
 The body is an object with `level`, `label`, `source`, `eventid`, `message`, `timestamp`
 (ISO 8601, UTC) and, when there is metadata besides the event id, `metadata` (string values).
-Events are queued per collector and sent one at a time, with a 10-second timeout. At most
+Events are queued per collector and sent one at a time. Each POST gets at most 10 seconds,
+however slowly the server answers; after that it's cancelled and the next event goes. At most
 `RemoteLogHandler.maxPendingEvents` (1,000) wait; beyond that new events are dropped. Events still
 queued when the process exits are lost.
 
