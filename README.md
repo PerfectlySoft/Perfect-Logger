@@ -108,6 +108,12 @@ don't stick to swift-log's default backend. If you changed the default logger be
 bootstrapping (say, `LogFile.logger.logLevel = .debug`), it is rebuilt on the new backend with the
 same level and metadata. A logger with your own label is left alone.
 
+`LogFile` creates its logger on first use, which runs the `LoggingSystem` factory. Log calls the
+factory itself makes through `LogFile` are dropped rather than recursing. That guard only covers
+re-entry on the same thread, so a factory must not block waiting on another thread that uses
+`LogFile`. A file path that can't be opened when the logger is created — for example a FIFO with
+no reader yet — stays disabled for that logger, so `LogFile` never writes to it.
+
 `LogFile.terminal(_:)` logs at `.critical` with `perfect.priority=terminal` metadata, written as
 `[EMERG]` by the file handler, and then aborts the process.
 

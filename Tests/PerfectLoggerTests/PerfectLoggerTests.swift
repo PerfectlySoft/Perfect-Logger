@@ -321,6 +321,20 @@ struct PerfectLoggerTests {
         #expect(LogFile.logger.logLevel == .debug)
     }
 
+    @Test func rebindDuringFirstUseDiscardsTheStaleLogger() {
+        // A first use of LogFile that is still building its logger on the old
+        // backend when bootstrap rebinds must not publish that logger.
+        LogFile.resetForTesting()
+        let stale = LogFile.resolveLogger {
+            LogFile.rebindDefaultLogger()  // what bootstrap does, mid-build
+            return Logger(label: "stale") { _ in SwiftLogNoOpLogHandler() }
+        }
+        #expect(stale.label == "stale")  // the caller still gets a logger
+        let next = LogFile.resolveLogger { Logger(label: "fresh") { _ in SwiftLogNoOpLogHandler() } }
+        #expect(next.label == "fresh", "the stale logger was cached")
+        LogFile.resetForTesting()
+    }
+
     @Test func rebindKeepsACustomLogger() throws {
         let path = tmpLog()
         defer { try? FileManager.default.removeItem(atPath: path) }
