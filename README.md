@@ -211,6 +211,5 @@ Apache 2.0 — see [LICENSE](LICENSE).
 
 ## Further Information
 
-`PerfectLogger` is part of Tim Taplin's [Perfect-Resurrection](https://github.com/taplin/Perfect-Resurrection)
-project, a Swift 6 rebuild of the original PerfectlySoft framework. Its only
-current consumer is `PerfectTemplate`; see that repo for it in real use.
+`PerfectLogger` is one of the [Perfect](https://github.com/PerfectlySoft/Perfect) Swift 6 packages.
+[PerfectTemplate](https://github.com/PerfectlySoft/PerfectTemplate) uses it; see that repo for it in real use.
